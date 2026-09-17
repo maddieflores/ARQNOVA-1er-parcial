@@ -1,4 +1,4 @@
-﻿# Desarrollo — Fase 0
+# Desarrollo — Fases 0 y 1A
 
 Seguir README.md desde la raíz del repositorio. Frontend y backend son paquetes npm independientes, con lockfiles; no existe gestor adicional de monorepo. Ejecutar npm ci para reproducir instalaciones y prisma generate antes de compilar backend en una instalación nueva.
 
@@ -6,9 +6,9 @@ Seguir README.md desde la raíz del repositorio. Frontend y backend son paquetes
 
 Código y nombres en inglés; textos visibles y documentación en español. Mantener módulos sencillos. Los directorios .gitkeep reservan el espacio de funcionalidades posteriores sin aparentar implementaciones. No hay endpoints de usuarios, login real ni editor. El dashboard es público y solo verifica el entorno.
 
-ConfigModule valida puerto, origen CORS y URL PostgreSQL. ValidationPipe global prepara validación DTO (whitelist, forbidNonWhitelisted y transform); los DTO se crearán junto con sus casos de uso. El filtro HTTP devuelve errores básicos y no expone detalles internos al cliente. SocketAdapter aplica el origen configurado a Socket.IO. Cada hook limpia su petición HTTP y conexión socket al desmontarse.
+ConfigModule valida puerto, origen CORS y URL PostgreSQL. ValidationPipe global configura whitelist, forbidNonWhitelisted y transform; Fase 1A agrega DTOs base de usuarios, sin endpoints CRUD. El filtro HTTP devuelve errores básicos y no expone detalles internos al cliente. SocketAdapter aplica el origen configurado a Socket.IO. Cada hook limpia su petición HTTP y conexión socket al desmontarse.
 
-No registrar ni versionar contraseñas, tokens o archivos .env. passwordHash es el único campo de contraseña; no existe ninguna escritura de contraseñas en esta fase. JWT, bcrypt, validación y guards se integrarán en Fase 1; instalar dependencias no equivale a tener autenticación implementada.
+No registrar ni versionar contraseñas, tokens o archivos .env. passwordHash es el único campo de contraseña. Fase 1A integra bcrypt, DTOs, servicios internos, configuración JWT y seed de desarrollo. El flujo de autenticación y los guards quedan para fases posteriores; ver SECURITY_PHASE_1A.md.
 
 ## Diagnóstico
 
@@ -21,4 +21,3 @@ No registrar ni versionar contraseñas, tokens o archivos .env. passwordHash es 
 Registrar resultados reales de comprobación en docs/VERIFICATION.md. Una compilación exitosa no demuestra por sí sola comunicación REST, conexión WebSocket ni conexión a PostgreSQL.
 
 En este equipo un PostgreSQL local ocupa 5432. Tras informar el conflicto, Docker publica PostgreSQL en 5433 (5432 interno) y DATABASE_URL utiliza localhost:5433. No se modifica el servicio existente.
-

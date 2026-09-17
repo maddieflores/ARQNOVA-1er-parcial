@@ -1,4 +1,4 @@
-﻿# ARQNOVA — Fase 0
+# ARQNOVA — Base técnica y seguridad (Fase 1A)
 
 Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Esta entrega prepara exclusivamente el entorno: no implementa casos de uso completos.
 
@@ -18,10 +18,10 @@ Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env
 ```
 
-Editar .env y elegir una contraseña local de PostgreSQL. En backend/.env, usar esa misma contraseña en DATABASE_URL (codificar caracteres especiales como URL). Configurar JWT_SECRET con un valor aleatorio local para la futura Fase 1. Los .env están ignorados; los ejemplos contienen únicamente marcadores. Ningún secreto backend debe llevar prefijo VITE_, porque las variables VITE_ son públicas.
+Editar .env y elegir una contraseña local de PostgreSQL. En backend/.env, usar esa misma contraseña en DATABASE_URL (codificar caracteres especiales como URL). Configurar JWT_SECRET con un valor aleatorio local de al menos 32 caracteres. Para el seed de Fase 1A, definir también ADMIN_* según docs/SECURITY_PHASE_1A.md. Los .env están ignorados; los ejemplos contienen únicamente marcadores. Ningún secreto backend debe llevar prefijo VITE_, porque las variables VITE_ son públicas.
 
 - Raíz: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB para Compose.
-- Backend: DATABASE_URL, PORT=3000, CORS_ORIGIN=http://localhost:5173, JWT_SECRET reservado.
+- Backend: DATABASE_URL, PORT=3000, CORS_ORIGIN=http://localhost:5173, JWT_SECRET y JWT_EXPIRES_IN.
 - Frontend: VITE_API_URL=http://localhost:3000/api, VITE_SOCKET_URL=http://localhost:3000.
 
 ## PostgreSQL, dependencias y migraciones
@@ -85,6 +85,20 @@ docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -
 
 ## Documentación
 
-Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. Detener el trabajo al terminar Fase 0; Fase 1 requiere autorización.
+Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1B sin autorización.
 
 
+
+## Fase 1A — Base de seguridad
+
+La base de Fase 0 se conserva. Se agregan servicios internos de usuarios/roles, DTOs, bcrypt, configuración JWT y seed idempotente de desarrollo. No hay login ni endpoints CRUD. Seguir [docs/SECURITY_PHASE_1A.md](docs/SECURITY_PHASE_1A.md) para configurar JWT_SECRET, JWT_EXPIRES_IN y ADMIN_* antes de ejecutar el seed:
+
+```powershell
+Set-Location backend
+npx prisma migrate dev
+npx prisma generate
+npm run prisma:seed
+npm run test:security
+```
+
+No continuar con Fase 1B sin autorización.
