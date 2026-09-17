@@ -1,6 +1,6 @@
-# ARQNOVA — Base técnica y seguridad (Fase 1B)
+# ARQNOVA — Base técnica y seguridad (Fase 1C)
 
-Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Incluye la base técnica y CU01 Gestionar autenticación; no implementa administración de usuarios ni casos de uso posteriores.
+Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Incluye la base técnica, CU01 Autenticación y CU02 Administración de usuarios; sin casos de uso posteriores.
 
 ## Tecnologías y requisitos
 
@@ -85,7 +85,7 @@ docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -
 
 ## Documentación
 
-Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1C sin autorización.
+Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1D sin autorización.
 
 
 
@@ -101,10 +101,16 @@ npm run prisma:seed
 npm run test:security
 ```
 
-No continuar con Fase 1C sin autorización.
+No continuar con Fase 1D sin autorización.
 
 ## Fase 1B — Autenticación
 
 POST /api/auth/login y GET /api/auth/me implementan CU01. Abrir /login con ADMIN_EMAIL y ADMIN_PASSWORD configurados localmente; el dashboard requiere autenticación y permite cerrar sesión. La sesión guarda únicamente el JWT en localStorage y se verifica con /auth/me al recargar. Ver [docs/AUTH_PHASE_1B.md](docs/AUTH_PHASE_1B.md) para endpoints, sesión y pruebas.
 
 Desde backend: npm run test:auth. Desde frontend, con ambos servidores activos y Chrome instalado: npm run test:auth. No continuar con Fase 1C.
+
+## Fase 1C — Gestión de usuarios
+
+Entrar como ADMINISTRADOR y abrir /admin/users. Permite listar, buscar, crear, editar, asignar roles y activar/desactivar. No hay registro público, eliminación física ni cambios de contraseña por edición. ANFITRION/COLABORADOR tienen acceso administrativo bloqueado en frontend y backend. Se protege al último administrador activo incluso ante solicitudes concurrentes.
+
+Consultar [docs/USERS_PHASE_1C.md](docs/USERS_PHASE_1C.md). Pruebas: npm run test:users en backend y frontend; el navegador requiere ambos servidores activos. No continuar con Fase 1D sin autorización.

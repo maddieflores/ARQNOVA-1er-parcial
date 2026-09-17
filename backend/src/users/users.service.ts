@@ -1,4 +1,4 @@
-﻿import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isEmail, isUUID } from 'class-validator';
 import { PasswordService } from '../common/security/password.service';
@@ -7,6 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RolesService } from '../roles/roles.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PUBLIC_USER_SELECT } from './user.select';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ListUsersDto } from './dto/list-users.dto';
+import { SystemRole } from '../roles/system-role';
 
 @Injectable()
 export class UsersService {
@@ -62,6 +65,43 @@ export class UsersService {
     }
   }
 
+  list(input: ListUsersDto = {}) {
+    const { search } = validateDto(ListUsersDto, input);
+    return this.prisma.user.findMany({
+      where: search ? { OR: [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }] } : {},
+      select: PUBLIC_USER_SELECT, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+    });
+  }
+
+  async update(id: string, input: UpdateUserDto) {
+    if (!isUUID(id, '4')) throw new BadRequestException('ID de usuario inválido');
+    const dto = validateDto(UpdateUserDto, input);
+    if (!Object.values(dto).some(value => value !== undefined)) throw new BadRequestException('Indica al menos un campo para actualizar');
+    try {
+      return await this.prisma.$transaction(async tx => {
+        // Todas las modificaciones de rol/estado se serializan antes de comprobar el último administrador.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(${71401})`;
+        const current = await tx.user.findUnique({ where: { id }, select: PUBLIC_USER_SELECT });
+        if (!current) throw new NotFoundException('Usuario inexistente');
+        const role = dto.roleId ? await tx.role.findUnique({ where: { id: dto.roleId } }) : current.role;
+        if (!role) throw new NotFoundException('Rol inexistente');
+        const removesAdmin = current.isActive && current.role.name === SystemRole.ADMINISTRADOR &&
+          (dto.isActive === false || role.name !== SystemRole.ADMINISTRADOR);
+        if (removesAdmin && await tx.user.count({ where: { isActive: true, role: { name: SystemRole.ADMINISTRADOR } } }) <= 1) {
+          throw new ConflictException('No se puede desactivar ni cambiar el rol del último administrador activo');
+        }
+        return tx.user.update({ where: { id }, data: dto, select: PUBLIC_USER_SELECT });
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') throw new ConflictException('El email ya está registrado');
+        if (error.code === 'P2003') throw new NotFoundException('Rol inexistente');
+        if (error.code === 'P2025') throw new NotFoundException('Usuario inexistente');
+        throw new InternalServerErrorException('No se pudo actualizar el usuario');
+      }
+      throw error;
+    }
+  }
   private normalizeEmail(email: string): string {
     if (typeof email !== 'string') throw new BadRequestException('Email inválido');
     const normalized = email.trim().toLowerCase();
