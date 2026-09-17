@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/router';
+import { AuthProvider } from './modules/auth/AuthProvider';
 import '@xyflow/react/dist/style.css';
 import './assets/styles.css';
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><RouterProvider router={router}/></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AuthProvider><RouterProvider router={router}/></AuthProvider></React.StrictMode>);

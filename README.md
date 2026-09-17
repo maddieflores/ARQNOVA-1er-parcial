@@ -1,6 +1,6 @@
-# ARQNOVA — Base técnica y seguridad (Fase 1A)
+# ARQNOVA — Base técnica y seguridad (Fase 1B)
 
-Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Esta entrega prepara exclusivamente el entorno: no implementa casos de uso completos.
+Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Incluye la base técnica y CU01 Gestionar autenticación; no implementa administración de usuarios ni casos de uso posteriores.
 
 ## Tecnologías y requisitos
 
@@ -38,7 +38,7 @@ npx prisma migrate dev
 Set-Location ..
 ```
 
-La migración inicial versionada crea únicamente User y Role. No se insertan usuarios ni roles de ejemplo. En una copia nueva, migrate dev aplica esa migración. Para crear cambios futuros: npx prisma migrate dev --name nombre_del_cambio. No usar db push como sustituto del historial de migraciones.
+La migración inicial versionada crea únicamente User y Role. El seed de Fase 1A crea los tres roles y el administrador mediante variables locales; ver docs/SECURITY_PHASE_1A.md. En una copia nueva, migrate dev aplica esa migración. Para crear cambios futuros: npx prisma migrate dev --name nombre_del_cambio. No usar db push como sustituto del historial de migraciones.
 
 ## Ejecutar en dos terminales
 
@@ -57,8 +57,8 @@ npm run dev
 ```
 
 - Web: http://localhost:5173
-- Login básico: http://localhost:5173/login
-- Dashboard público de comprobación: http://localhost:5173/dashboard
+- Login: http://localhost:5173/login
+- Dashboard protegido: http://localhost:5173/dashboard
 - API: http://localhost:3000/api
 - Health: http://localhost:3000/api/health
 - Socket.IO: namespace /collaboration en http://localhost:3000 (no /api/collaboration).
@@ -79,13 +79,13 @@ docker compose config --quiet
 Invoke-RestMethod http://localhost:3000/api/health
 ```
 
-Health debe devolver status=ok y service=arqnova-api. Abrir inicio o dashboard y verificar el mismo resultado y Servidor realtime: conectado. Al cerrar la página, NestJS registra Cliente desconectado. Visitar una ruta inexistente para comprobar 404. La interfaz usa utilidades Tailwind; React Flow está instalado y sus estilos cargados, sin editor UML.
+Health debe devolver status=ok y service=arqnova-api. Abrir inicio o dashboard tras iniciar sesión y verificar el mismo resultado y Servidor realtime: conectado. Al cerrar la página, NestJS registra Cliente desconectado. Visitar una ruta inexistente para comprobar 404. La interfaz usa utilidades Tailwind; React Flow está instalado y sus estilos cargados, sin editor UML.
 
 docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -v si se desea conservar los datos. Cambiar POSTGRES_PASSWORD después de inicializar el volumen no cambia automáticamente la contraseña almacenada en PostgreSQL.
 
 ## Documentación
 
-Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1B sin autorización.
+Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1C sin autorización.
 
 
 
@@ -101,4 +101,10 @@ npm run prisma:seed
 npm run test:security
 ```
 
-No continuar con Fase 1B sin autorización.
+No continuar con Fase 1C sin autorización.
+
+## Fase 1B — Autenticación
+
+POST /api/auth/login y GET /api/auth/me implementan CU01. Abrir /login con ADMIN_EMAIL y ADMIN_PASSWORD configurados localmente; el dashboard requiere autenticación y permite cerrar sesión. La sesión guarda únicamente el JWT en localStorage y se verifica con /auth/me al recargar. Ver [docs/AUTH_PHASE_1B.md](docs/AUTH_PHASE_1B.md) para endpoints, sesión y pruebas.
+
+Desde backend: npm run test:auth. Desde frontend, con ambos servidores activos y Chrome instalado: npm run test:auth. No continuar con Fase 1C.

@@ -1,14 +1,14 @@
-# Desarrollo — Fases 0 y 1A
+# Desarrollo — Fases 0, 1A y 1B
 
 Seguir README.md desde la raíz del repositorio. Frontend y backend son paquetes npm independientes, con lockfiles; no existe gestor adicional de monorepo. Ejecutar npm ci para reproducir instalaciones y prisma generate antes de compilar backend en una instalación nueva.
 
 ## Convenciones
 
-Código y nombres en inglés; textos visibles y documentación en español. Mantener módulos sencillos. Los directorios .gitkeep reservan el espacio de funcionalidades posteriores sin aparentar implementaciones. No hay endpoints de usuarios, login real ni editor. El dashboard es público y solo verifica el entorno.
+Código y nombres en inglés; textos visibles y documentación en español. Mantener módulos sencillos. Los directorios .gitkeep reservan el espacio de funcionalidades posteriores sin aparentar implementaciones. No hay CRUD público de usuarios ni editor. Fase 1B incorpora login real y dashboard protegido; ver AUTH_PHASE_1B.md.
 
 ConfigModule valida puerto, origen CORS y URL PostgreSQL. ValidationPipe global configura whitelist, forbidNonWhitelisted y transform; Fase 1A agrega DTOs base de usuarios, sin endpoints CRUD. El filtro HTTP devuelve errores básicos y no expone detalles internos al cliente. SocketAdapter aplica el origen configurado a Socket.IO. Cada hook limpia su petición HTTP y conexión socket al desmontarse.
 
-No registrar ni versionar contraseñas, tokens o archivos .env. passwordHash es el único campo de contraseña. Fase 1A integra bcrypt, DTOs, servicios internos, configuración JWT y seed de desarrollo. El flujo de autenticación y los guards quedan para fases posteriores; ver SECURITY_PHASE_1A.md.
+No registrar ni versionar contraseñas, tokens o archivos .env. passwordHash es el único campo de contraseña. Fase 1A integra bcrypt, DTOs, servicios internos, configuración JWT y seed de desarrollo. Fase 1B incorpora autenticación JWT y guard reutilizable. La autorización por roles permanece pendiente de Fase 1C; ver SECURITY_PHASE_1A.md y AUTH_PHASE_1B.md.
 
 ## Diagnóstico
 

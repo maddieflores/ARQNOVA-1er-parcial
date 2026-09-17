@@ -1,6 +1,37 @@
 import { API_URL } from './config';
-export async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, { signal });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json() as Promise<T>;
+import { sessionStore } from '../modules/auth/session-store';
+
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) { super(message); }
+}
+
+interface RequestOptions { method?: 'GET' | 'POST'; body?: unknown; signal?: AbortSignal; authenticated?: boolean; }
+export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const token = options.authenticated === false ? null : sessionStore.getToken();
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: options.method ?? 'GET', headers, signal: options.signal,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    });
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+    throw new ApiError(0, 'No se pudo contactar con la API. Intenta nuevamente.');
+  }
+  if (!response.ok) {
+    if (response.status === 401 && token) sessionStore.clear('Sesión inválida o expirada. Inicia sesión nuevamente.', token);
+    const message = response.status === 401
+      ? (options.authenticated === false ? 'Credenciales inválidas.' : 'Sesión inválida o expirada.')
+      : response.status === 400 ? 'Revisa los datos ingresados.' : 'Ocurrió un error. Intenta nuevamente.';
+    throw new ApiError(response.status, message);
+  }
+  try { return await response.json() as T; }
+  catch { throw new ApiError(500, 'Se recibió una respuesta inesperada. Intenta nuevamente.'); }
+}
+
+export function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return requestJson<T>(path, { signal });
 }
