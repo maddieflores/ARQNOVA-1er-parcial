@@ -1,6 +1,6 @@
-# ARQNOVA — Base técnica y seguridad (Fase 1C)
+# ARQNOVA — Fases 0, 1 y 2
 
-Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Incluye la base técnica, CU01 Autenticación y CU02 Administración de usuarios; sin casos de uso posteriores.
+Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Actualmente incluye CU01 Autenticación, CU02 Administración de usuarios, CU03 Gestión de proyectos UML y CU04 Gestión de participantes e invitaciones.
 
 ## Tecnologías y requisitos
 
@@ -38,7 +38,7 @@ npx prisma migrate dev
 Set-Location ..
 ```
 
-La migración inicial versionada crea únicamente User y Role. El seed de Fase 1A crea los tres roles y el administrador mediante variables locales; ver docs/SECURITY_PHASE_1A.md. En una copia nueva, migrate dev aplica esa migración. Para crear cambios futuros: npx prisma migrate dev --name nombre_del_cambio. No usar db push como sustituto del historial de migraciones.
+Las migraciones versionadas crean `User`, `Role`, `Project`, `ProjectMember` y `ProjectInvitation`. El seed crea los tres roles y el administrador mediante variables locales; ver docs/SECURITY_PHASE_1A.md. En una copia nueva, `migrate dev` aplica todo el historial. No usar `db push` como sustituto de las migraciones.
 
 ## Ejecutar en dos terminales
 
@@ -59,6 +59,8 @@ npm run dev
 - Web: http://localhost:5173
 - Login: http://localhost:5173/login
 - Dashboard protegido: http://localhost:5173/dashboard
+- Proyectos del anfitrión: http://localhost:5173/projects
+- Proyectos compartidos: http://localhost:5173/shared-projects
 - API: http://localhost:3000/api
 - Health: http://localhost:3000/api/health
 - Socket.IO: namespace /collaboration en http://localhost:3000 (no /api/collaboration).
@@ -85,7 +87,7 @@ docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -
 
 ## Documentación
 
-Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md y docs/PHASES.md. mobile está reservado para Flutter. No continuar con Fase 1D sin autorización.
+Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, docs/PHASES.md y los resúmenes técnicos por fase. `mobile` continúa reservado para Flutter.
 
 
 
@@ -101,13 +103,11 @@ npm run prisma:seed
 npm run test:security
 ```
 
-No continuar con Fase 1D sin autorización.
-
 ## Fase 1B — Autenticación
 
 POST /api/auth/login y GET /api/auth/me implementan CU01. Abrir /login con ADMIN_EMAIL y ADMIN_PASSWORD configurados localmente; el dashboard requiere autenticación y permite cerrar sesión. La sesión guarda únicamente el JWT en localStorage y se verifica con /auth/me al recargar. Ver [docs/AUTH_PHASE_1B.md](docs/AUTH_PHASE_1B.md) para endpoints, sesión y pruebas.
 
-Desde backend: npm run test:auth. Desde frontend, con ambos servidores activos y Chrome instalado: npm run test:auth. No continuar con Fase 1C.
+Desde backend: `npm run test:auth`. Desde frontend, con ambos servidores activos y Chrome instalado: `npm run test:auth`.
 
 ## Fase 1C — Gestión de usuarios
 
@@ -130,4 +130,21 @@ npm run test:auth
 npm run test:users
 ```
 
-No continuar a otra fase sin autorización.
+## Fase 2 — Proyectos y participantes
+
+El rol `ANFITRION` gestiona sus proyectos desde `/projects` y sus participantes desde el detalle de cada proyecto. El propietario proviene del JWT y el borrado es lógico. Las invitaciones se crean para usuarios registrados, almacenan únicamente el hash del token y se aceptan desde `/invitations/:token`. El rol `COLABORADOR` consulta sus membresías en `/shared-projects`.
+
+Consultar [docs/PHASE_2_SUMMARY.md](docs/PHASE_2_SUMMARY.md), [docs/PROJECTS_BASE_PHASE_2A.md](docs/PROJECTS_BASE_PHASE_2A.md), [docs/PROJECTS_PHASE_2B.md](docs/PROJECTS_PHASE_2B.md) y [docs/PARTICIPANTS_PHASE_2C.md](docs/PARTICIPANTS_PHASE_2C.md).
+
+```powershell
+# Backend
+npm run test:projects-base
+npm run test:projects
+npm run test:participants
+
+# Frontend, con backend y frontend activos
+npm run test:projects
+npm run test:participants
+```
+
+No iniciar una fase posterior sin autorización.

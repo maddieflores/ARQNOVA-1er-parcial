@@ -31,21 +31,25 @@ export class InvitationsService {
     const dto = validateDto(CreateInvitationDto, input);
     const project = await this.projects.verifyOwner(projectId, ownerId);
     if (project.ownerId === dto.invitedUserId) throw new ConflictException('El propietario no necesita una invitación');
-    const user = await this.prisma.user.findUnique({ where: { id: dto.invitedUserId }, select: { isActive: true } });
-    if (!user) throw new NotFoundException('Usuario invitado inexistente');
-    if (!user.isActive) throw new ConflictException('No se puede invitar a un usuario inactivo');
-    if (await this.prisma.projectMember.findUnique({ where: { projectId_userId: { projectId, userId: dto.invitedUserId } } })) {
-      throw new ConflictException('El usuario ya participa en el proyecto');
-    }
-    const duplicate = await this.prisma.projectInvitation.findFirst({ where: { projectId, invitedUserId: dto.invitedUserId, status: InvitationStatus.PENDING, expiresAt: { gt: new Date() } } });
-    if (duplicate) throw new ConflictException('Ya existe una invitación vigente para este usuario');
     const expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const maximum = Date.now() + 30 * 24 * 60 * 60 * 1000;
     if (expiresAt.getTime() <= Date.now() || expiresAt.getTime() > maximum) throw new BadRequestException('La invitación debe vencer dentro de los próximos 30 días');
     const token = randomBytes(32).toString('base64url');
-    const invitation = await this.prisma.projectInvitation.create({
-      data: { projectId, invitedUserId: dto.invitedUserId, tokenHash: this.hashToken(token), expiresAt },
-      select: INVITATION_SELECT,
+    const invitation = await this.prisma.$transaction(async tx => {
+      // Serializa la comprobación y creación para impedir invitaciones pendientes duplicadas concurrentes.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${72402})`;
+      const user = await tx.user.findUnique({ where: { id: dto.invitedUserId }, select: { isActive: true } });
+      if (!user) throw new NotFoundException('Usuario invitado inexistente');
+      if (!user.isActive) throw new ConflictException('No se puede invitar a un usuario inactivo');
+      if (await tx.projectMember.findUnique({ where: { projectId_userId: { projectId, userId: dto.invitedUserId } } })) {
+        throw new ConflictException('El usuario ya participa en el proyecto');
+      }
+      const duplicate = await tx.projectInvitation.findFirst({ where: { projectId, invitedUserId: dto.invitedUserId, status: InvitationStatus.PENDING, expiresAt: { gt: new Date() } } });
+      if (duplicate) throw new ConflictException('Ya existe una invitación vigente para este usuario');
+      return tx.projectInvitation.create({
+        data: { projectId, invitedUserId: dto.invitedUserId, tokenHash: this.hashToken(token), expiresAt },
+        select: INVITATION_SELECT,
+      });
     });
     return { invitation, token };
   }
