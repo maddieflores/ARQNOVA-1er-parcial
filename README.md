@@ -113,4 +113,21 @@ Desde backend: npm run test:auth. Desde frontend, con ambos servidores activos y
 
 Entrar como ADMINISTRADOR y abrir /admin/users. Permite listar, buscar, crear, editar, asignar roles y activar/desactivar. No hay registro público, eliminación física ni cambios de contraseña por edición. ANFITRION/COLABORADOR tienen acceso administrativo bloqueado en frontend y backend. Se protege al último administrador activo incluso ante solicitudes concurrentes.
 
-Consultar [docs/USERS_PHASE_1C.md](docs/USERS_PHASE_1C.md). Pruebas: npm run test:users en backend y frontend; el navegador requiere ambos servidores activos. No continuar con Fase 1D sin autorización.
+Consultar [docs/USERS_PHASE_1C.md](docs/USERS_PHASE_1C.md). Pruebas: npm run test:users en backend y frontend; el navegador requiere ambos servidores activos.
+
+## Cierre de Fase 1
+
+La trazabilidad de CU01/CU02, arquitectura de seguridad, variables, endpoints y resultados finales está en [docs/PHASE_1_SUMMARY.md](docs/PHASE_1_SUMMARY.md).
+
+```powershell
+# Backend
+npm run test:security
+npm run test:auth
+npm run test:users
+
+# Frontend, con ambos servidores activos
+npm run test:auth
+npm run test:users
+```
+
+No continuar a otra fase sin autorización.

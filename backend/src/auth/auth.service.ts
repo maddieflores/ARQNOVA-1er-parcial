@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, type OnModuleInit } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { isUUID } from 'class-validator';
+import { randomBytes } from 'node:crypto';
 import { PasswordService } from '../common/security/password.service';
 import { validateDto } from '../common/validate-dto';
 import { UsersService } from '../users/users.service';
@@ -8,13 +9,22 @@ import { LoginDto } from './dto/login.dto';
 import type { AuthUser } from './auth-user';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
+  private dummyPasswordHash = '';
+
   constructor(private readonly users: UsersService, private readonly passwords: PasswordService, private readonly jwt: JwtService) {}
+
+  async onModuleInit(): Promise<void> {
+    // Evita que el tiempo de bcrypt revele si el email existe o si la cuenta está inactiva.
+    this.dummyPasswordHash = await this.passwords.hash(randomBytes(32).toString('hex'));
+  }
 
   async login(input: LoginDto) {
     const dto = validateDto(LoginDto, input);
     const credentials = await this.users.findCredentialsByEmail(dto.email);
-    if (!credentials || !credentials.isActive || !(await this.passwords.compare(dto.password, credentials.passwordHash))) {
+    const passwordHash = credentials?.passwordHash ?? this.dummyPasswordHash;
+    const passwordMatches = await this.passwords.compare(dto.password, passwordHash);
+    if (!credentials || !credentials.isActive || !passwordMatches) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
     const user = await this.currentUser(credentials.id);
