@@ -5,7 +5,7 @@ export class ApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
 }
 
-interface RequestOptions { method?: 'GET' | 'POST' | 'PATCH'; body?: unknown; signal?: AbortSignal; authenticated?: boolean; }
+interface RequestOptions { method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; body?: unknown; signal?: AbortSignal; authenticated?: boolean; }
 export async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const token = options.authenticated === false ? null : sessionStore.getToken();
   const headers: Record<string, string> = { Accept: 'application/json' };
@@ -27,10 +27,10 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
       ? (options.authenticated === false ? 'Credenciales inválidas.' : 'Sesión inválida o expirada.')
       : response.status === 400 ? 'Revisa los datos ingresados.' : 'Ocurrió un error. Intenta nuevamente.';
     let safeMessage = message;
-    if (response.status === 403) safeMessage = 'No tienes permiso para administrar usuarios.';
+    if (response.status === 403) safeMessage = 'No tienes permiso para realizar esta acción.';
     if ([400, 404, 409].includes(response.status)) {
       const body = await response.json().catch(() => null) as { message?: unknown } | null;
-      const allowed = ['El email ya está registrado', 'Rol inexistente', 'Usuario inexistente', 'No se puede desactivar ni cambiar el rol del último administrador activo', 'Indica al menos un campo para actualizar'];
+      const allowed = ['El email ya está registrado', 'Rol inexistente', 'Usuario inexistente', 'Proyecto inexistente', 'No se puede desactivar ni cambiar el rol del último administrador activo', 'Indica al menos un campo para actualizar'];
       if (typeof body?.message === 'string' && allowed.includes(body.message)) safeMessage = body.message;
     }
     throw new ApiError(response.status, safeMessage);

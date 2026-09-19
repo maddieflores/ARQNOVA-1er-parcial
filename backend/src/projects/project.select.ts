@@ -8,6 +8,7 @@ export const PROJECT_SELECT = {
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
+  owner: { select: { id: true, name: true, email: true } },
 } satisfies Prisma.ProjectSelect;
 
 export const PROJECT_MEMBER_SELECT = {

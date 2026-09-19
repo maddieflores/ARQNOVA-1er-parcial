@@ -7,4 +7,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from '../modules/auth/ProtectedRoute';
 import { AdminRoute } from '../modules/auth/AdminRoute';
 import { AdminUsersPage } from '../pages/AdminUsersPage';
-export const router = createBrowserRouter([{ element: <MainLayout/>, children: [{ path: '/', element: <HomePage/> }, { path: '/login', element: <LoginPage/> }, { element: <ProtectedRoute/>, children: [{ path: '/dashboard', element: <DashboardPage/> }, { element: <AdminRoute/>, children: [{ path: '/admin/users', element: <AdminUsersPage/> }] }] }, { path: '*', element: <NotFoundPage/> }] }]);
+import { HostRoute } from '../modules/auth/HostRoute';
+import { ProjectsPage } from '../pages/ProjectsPage';
+import { ProjectDetailPage } from '../pages/ProjectDetailPage';
+export const router = createBrowserRouter([{ element: <MainLayout/>, children: [{ path: '/', element: <HomePage/> }, { path: '/login', element: <LoginPage/> }, { element: <ProtectedRoute/>, children: [{ path: '/dashboard', element: <DashboardPage/> }, { element: <AdminRoute/>, children: [{ path: '/admin/users', element: <AdminUsersPage/> }] }, { element: <HostRoute/>, children: [{ path: '/projects', element: <ProjectsPage/> }, { path: '/projects/:id', element: <ProjectDetailPage/> }] }] }, { path: '*', element: <NotFoundPage/> }] }]);

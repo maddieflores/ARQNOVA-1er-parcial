@@ -10,7 +10,7 @@ export class RolesGuard implements CanActivate {
     const user = context.switchToHttp().getRequest<AuthenticatedRequest>().user;
     if (!user) throw new UnauthorizedException('Sesión inválida o expirada');
     const roles = this.reflector.getAllAndOverride<SystemRole[]>(ROLES_KEY, [context.getHandler(), context.getClass()]);
-    if (!roles || !roles.includes(user.role.name as SystemRole)) throw new ForbiddenException('No tienes permiso para administrar usuarios');
+    if (!roles || !roles.includes(user.role.name as SystemRole)) throw new ForbiddenException('No tienes permiso para realizar esta acción');
     return true;
   }
 }

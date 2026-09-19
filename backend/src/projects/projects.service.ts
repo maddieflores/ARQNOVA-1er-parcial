@@ -6,6 +6,7 @@ import { SystemRole } from '../roles/system-role';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PROJECT_SELECT } from './project.select';
+import { ListProjectsDto } from './dto/list-projects.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -27,9 +28,14 @@ export class ProjectsService {
     return project;
   }
 
-  listByOwner(ownerId: string) {
+  listByOwner(ownerId: string, input: ListProjectsDto = {}) {
     this.validateId(ownerId, 'propietario');
-    return this.prisma.project.findMany({ where: { ownerId, deletedAt: null }, select: PROJECT_SELECT, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }] });
+    const { search } = validateDto(ListProjectsDto, input);
+    return this.prisma.project.findMany({
+      where: { ownerId, deletedAt: null, ...(search ? { name: { contains: search, mode: 'insensitive' as const } } : {}) },
+      select: PROJECT_SELECT,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+    });
   }
 
   async verifyOwner(projectId: string, userId: string) {
