@@ -28,6 +28,7 @@ export function ProjectDetailPage() {
       <div><dt className="font-semibold">Creado</dt><dd>{formatDate(project.createdAt)}</dd></div>
       <div><dt className="font-semibold">Actualizado</dt><dd>{formatDate(project.updatedAt)}</dd></div>
     </dl>
+    <Link className="mt-5 inline-block rounded bg-blue-700 px-4 py-2 text-white" to={`/projects/${project.id}/participants`}>Gestionar participantes</Link>
     <section className="mt-6 rounded border border-dashed p-5"><h2 className="font-semibold">Diagrama UML</h2><p className="mt-2 text-slate-600">Editor UML disponible en una fase posterior.</p></section>
   </>;
 }

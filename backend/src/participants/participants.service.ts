@@ -4,7 +4,7 @@ import { validateDto } from '../common/validate-dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddParticipantDto } from './dto/add-participant.dto';
 import { ProjectsService } from '../projects/projects.service';
-import { PROJECT_MEMBER_SELECT } from '../projects/project.select';
+import { PROJECT_MEMBER_SELECT, PROJECT_SELECT } from '../projects/project.select';
 
 @Injectable()
 export class ParticipantsService {
@@ -39,12 +39,21 @@ export class ParticipantsService {
 
   async remove(projectId: string, ownerId: string, userId: string) {
     const dto = validateDto(AddParticipantDto, { userId });
-    await this.projects.verifyOwner(projectId, ownerId);
+    const project = await this.projects.verifyOwner(projectId, ownerId);
+    if (project.ownerId === dto.userId) throw new ConflictException('El propietario no puede ser retirado del proyecto');
     try {
       return await this.prisma.projectMember.delete({ where: { projectId_userId: { projectId, userId: dto.userId } }, select: PROJECT_MEMBER_SELECT });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') throw new NotFoundException('Participante inexistente');
       throw error;
     }
+  }
+
+  async listShared(userId: string) {
+    return this.prisma.projectMember.findMany({
+      where: { userId, user: { isActive: true }, project: { deletedAt: null } },
+      select: { id: true, joinedAt: true, project: { select: PROJECT_SELECT } },
+      orderBy: [{ joinedAt: 'desc' }, { id: 'asc' }],
+    });
   }
 }

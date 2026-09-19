@@ -16,5 +16,5 @@ export const PROJECT_MEMBER_SELECT = {
   projectId: true,
   userId: true,
   joinedAt: true,
-  user: { select: { id: true, name: true, email: true, isActive: true } },
+  user: { select: { id: true, name: true, email: true, isActive: true, role: { select: { id: true, name: true } } } },
 } satisfies Prisma.ProjectMemberSelect;

@@ -6,15 +6,26 @@ import { validateDto } from '../common/validate-dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectsService } from '../projects/projects.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { InviteParticipantDto } from './dto/invite-participant.dto';
+import { PROJECT_MEMBER_SELECT } from '../projects/project.select';
 
 const INVITATION_SELECT = {
   id: true, projectId: true, invitedUserId: true, status: true,
   expiresAt: true, createdAt: true, acceptedAt: true,
+  invitedUser: { select: { id: true, name: true, email: true, role: { select: { id: true, name: true } } } },
+  project: { select: { id: true, name: true, description: true, owner: { select: { id: true, name: true, email: true } } } },
 } satisfies Prisma.ProjectInvitationSelect;
 
 @Injectable()
 export class InvitationsService {
   constructor(private readonly prisma: PrismaService, private readonly projects: ProjectsService) {}
+
+  async createByEmail(projectId: string, ownerId: string, input: InviteParticipantDto) {
+    const dto = validateDto(InviteParticipantDto, input);
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email }, select: { id: true } });
+    if (!user) throw new NotFoundException('Usuario invitado inexistente');
+    return this.create(projectId, ownerId, { invitedUserId: user.id, expiresAt: dto.expiresAt });
+  }
 
   async create(projectId: string, ownerId: string, input: CreateInvitationDto) {
     const dto = validateDto(CreateInvitationDto, input);
@@ -40,10 +51,21 @@ export class InvitationsService {
   }
 
   async findByToken(token: string) {
-    if (!token) throw new BadRequestException('Token de invitación inválido');
+    if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new BadRequestException('Token de invitación inválido');
     const invitation = await this.prisma.projectInvitation.findUnique({ where: { tokenHash: this.hashToken(token) }, select: INVITATION_SELECT });
     if (!invitation) throw new NotFoundException('Invitación inexistente');
     return invitation;
+  }
+
+  async list(projectId: string, ownerId: string) {
+    await this.projects.verifyOwner(projectId, ownerId);
+    await this.prisma.projectInvitation.updateMany({
+      where: { projectId, status: InvitationStatus.PENDING, expiresAt: { lte: new Date() } },
+      data: { status: InvitationStatus.EXPIRED },
+    });
+    return this.prisma.projectInvitation.findMany({
+      where: { projectId }, select: INVITATION_SELECT, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+    });
   }
 
   async validate(token: string, invitedUserId: string) {
@@ -65,7 +87,7 @@ export class InvitationsService {
       return await this.prisma.$transaction(async tx => {
         const current = await tx.projectInvitation.findUniqueOrThrow({ where: { id: invitation.id } });
         if (current.status !== InvitationStatus.PENDING || current.expiresAt.getTime() <= Date.now()) throw new ConflictException('La invitación ya no es válida');
-        const membership = await tx.projectMember.create({ data: { projectId: current.projectId, userId: invitedUserId } });
+        const membership = await tx.projectMember.create({ data: { projectId: current.projectId, userId: invitedUserId }, select: PROJECT_MEMBER_SELECT });
         await tx.projectInvitation.update({ where: { id: current.id }, data: { status: InvitationStatus.ACCEPTED, acceptedAt: new Date() } });
         return membership;
       });
