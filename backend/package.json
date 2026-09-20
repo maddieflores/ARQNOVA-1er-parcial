@@ -15,7 +15,8 @@
     "test:users": "npm run build && node --test test/users.test.cjs",
     "test:projects-base": "npm run build && node --test test/projects-base.test.cjs",
     "test:projects": "npm run build && node --test test/projects.test.cjs",
-    "test:participants": "npm run build && node --test test/participants.test.cjs"
+    "test:participants": "npm run build && node --test test/participants.test.cjs",
+    "test:uml-base": "npm run build && node --test test/uml-base.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.3",

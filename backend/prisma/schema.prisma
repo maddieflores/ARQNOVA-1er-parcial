@@ -32,6 +32,7 @@ model Project {
   owner       User                @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   members     ProjectMember[]
   invitations ProjectInvitation[]
+  diagrams    Diagram[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
   deletedAt   DateTime?
@@ -73,6 +74,97 @@ enum InvitationStatus {
   ACCEPTED
   REJECTED
   EXPIRED
+}
+
+enum UmlVisibility {
+  PUBLIC
+  PRIVATE
+  PROTECTED
+  PACKAGE
+}
+
+enum UmlRelationType {
+  ASSOCIATION
+  AGGREGATION
+  COMPOSITION
+  INHERITANCE
+  DEPENDENCY
+}
+
+model Diagram {
+  id        String        @id @default(uuid()) @db.Uuid
+  projectId String        @unique @db.Uuid
+  name      String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  classes   UmlClass[]
+  relations UmlRelation[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model UmlClass {
+  id              String         @id @default(uuid()) @db.Uuid
+  diagramId       String         @db.Uuid
+  name            String
+  x               Float
+  y               Float
+  width           Float?
+  height          Float?
+  isAbstract      Boolean        @default(false)
+  diagram         Diagram        @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  attributes      UmlAttribute[]
+  methods         UmlMethod[]
+  sourceRelations UmlRelation[]  @relation("RelationSource")
+  targetRelations UmlRelation[]  @relation("RelationTarget")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([diagramId])
+}
+
+model UmlAttribute {
+  id           String        @id @default(uuid()) @db.Uuid
+  umlClassId   String        @db.Uuid
+  name         String
+  type         String
+  visibility   UmlVisibility @default(PRIVATE)
+  isPrimaryKey Boolean       @default(false)
+  position     Int           @default(0)
+  umlClass     UmlClass      @relation(fields: [umlClassId], references: [id], onDelete: Cascade)
+
+  @@index([umlClassId, position])
+}
+
+model UmlMethod {
+  id         String        @id @default(uuid()) @db.Uuid
+  umlClassId String        @db.Uuid
+  name       String
+  returnType String
+  visibility UmlVisibility @default(PUBLIC)
+  position   Int           @default(0)
+  umlClass   UmlClass      @relation(fields: [umlClassId], references: [id], onDelete: Cascade)
+
+  @@index([umlClassId, position])
+}
+
+model UmlRelation {
+  id                 String          @id @default(uuid()) @db.Uuid
+  diagramId          String          @db.Uuid
+  sourceClassId      String          @db.Uuid
+  targetClassId      String          @db.Uuid
+  type               UmlRelationType
+  sourceMultiplicity String          @default("1")
+  targetMultiplicity String          @default("1")
+  label              String?
+  diagram            Diagram         @relation(fields: [diagramId], references: [id], onDelete: Cascade)
+  sourceClass        UmlClass        @relation("RelationSource", fields: [sourceClassId], references: [id], onDelete: Restrict)
+  targetClass        UmlClass        @relation("RelationTarget", fields: [targetClassId], references: [id], onDelete: Restrict)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([diagramId])
+  @@index([sourceClassId])
+  @@index([targetClassId])
 }
 
 model Role {
