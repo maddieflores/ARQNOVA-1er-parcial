@@ -21,16 +21,18 @@ export class UmlRelationsService {
     return this.prisma.umlRelation.create({ data: { ...dto, label: dto.label?.trim(), diagramId } });
   }
 
-  async update(id: string, userId: string, input: UpdateUmlRelationDto) {
+  async update(id: string, userId: string, input: UpdateUmlRelationDto, expectedDiagramId?: string) {
     const dto = validateDto(UpdateUmlRelationDto, input);
     if (!Object.values(dto).some(value => value !== undefined)) throw new BadRequestException('Indica al menos un campo para actualizar');
     const relation = await this.find(id);
+    if (expectedDiagramId && relation.diagramId !== expectedDiagramId) throw new NotFoundException('Relación UML inexistente');
     await this.diagrams.verifyAccess(relation.diagramId, userId);
     return this.prisma.umlRelation.update({ where: { id }, data: { ...dto, label: dto.label?.trim() } });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, expectedDiagramId?: string) {
     const relation = await this.find(id);
+    if (expectedDiagramId && relation.diagramId !== expectedDiagramId) throw new NotFoundException('Relación UML inexistente');
     await this.diagrams.verifyAccess(relation.diagramId, userId);
     return this.prisma.umlRelation.delete({ where: { id } });
   }

@@ -49,7 +49,7 @@ const privateValues = [process.env.ADMIN_PASSWORD, process.env.JWT_SECRET];
     console.log('Edición de nombre y descripción funciona.');
     await page.getByRole('listitem').filter({ hasText: updated }).getByRole('link', { name: 'Abrir', exact: true }).click(); await page.waitForURL(`${WEB}/projects/${project.id}`);
     await page.getByRole('heading', { name: updated, exact: true }).waitFor(); await page.getByText(`Prueba ANFITRION (${host.email})`, { exact: true }).waitFor();
-    await page.getByText('Editor UML disponible en una fase posterior.', { exact: true }).waitFor();
+    await page.getByRole('link', { name: 'Abrir editor UML', exact: true }).waitFor();
     console.log('Consulta muestra datos públicos y placeholder controlado.');
     await page.getByRole('link', { name: 'Volver a proyectos' }).click();
     await page.route(`${API}/projects/${project.id}`, route => route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ message: 'No autorizado' }) }));

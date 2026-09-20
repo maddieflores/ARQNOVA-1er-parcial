@@ -14,30 +14,33 @@ export class UmlMethodsService {
     return this.prisma.umlMethod.findMany({ where: { umlClassId }, orderBy: [{ position: 'asc' }, { id: 'asc' }] });
   }
 
-  async create(umlClassId: string, userId: string, input: CreateUmlMethodDto) {
+  async create(umlClassId: string, userId: string, input: CreateUmlMethodDto, expectedDiagramId?: string) {
     const dto = validateDto(CreateUmlMethodDto, input);
-    await this.verifyClass(umlClassId, userId);
+    await this.verifyClass(umlClassId, userId, expectedDiagramId);
     return this.prisma.umlMethod.create({ data: { ...dto, name: dto.name.trim(), returnType: dto.returnType.trim(), umlClassId } });
   }
 
-  async update(id: string, userId: string, input: UpdateUmlMethodDto) {
+  async update(id: string, userId: string, input: UpdateUmlMethodDto, expectedClassId?: string, expectedDiagramId?: string) {
     const dto = validateDto(UpdateUmlMethodDto, input);
     if (!Object.values(dto).some(value => value !== undefined)) throw new BadRequestException('Indica al menos un campo para actualizar');
     const method = await this.find(id);
-    await this.verifyClass(method.umlClassId, userId);
+    if (expectedClassId && method.umlClassId !== expectedClassId) throw new NotFoundException('Método UML inexistente');
+    await this.verifyClass(method.umlClassId, userId, expectedDiagramId);
     return this.prisma.umlMethod.update({ where: { id }, data: { ...dto, name: dto.name?.trim(), returnType: dto.returnType?.trim() } });
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, expectedClassId?: string, expectedDiagramId?: string) {
     const method = await this.find(id);
-    await this.verifyClass(method.umlClassId, userId);
+    if (expectedClassId && method.umlClassId !== expectedClassId) throw new NotFoundException('Método UML inexistente');
+    await this.verifyClass(method.umlClassId, userId, expectedDiagramId);
     return this.prisma.umlMethod.delete({ where: { id } });
   }
 
-  private async verifyClass(id: string, userId: string) {
+  private async verifyClass(id: string, userId: string, expectedDiagramId?: string) {
     if (!isUUID(id, '4')) throw new BadRequestException('ID de clase UML inválido');
     const umlClass = await this.prisma.umlClass.findUnique({ where: { id }, select: { diagramId: true } });
     if (!umlClass) throw new NotFoundException('Clase UML inexistente');
+    if (expectedDiagramId && umlClass.diagramId !== expectedDiagramId) throw new NotFoundException('Clase UML inexistente');
     await this.diagrams.verifyAccess(umlClass.diagramId, userId);
   }
 

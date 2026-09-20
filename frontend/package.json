@@ -10,7 +10,8 @@
     "test:auth": "node test/auth.browser.cjs",
     "test:users": "node test/users.browser.cjs",
     "test:projects": "node test/projects.browser.cjs",
-    "test:participants": "node test/participants.browser.cjs"
+    "test:participants": "node test/participants.browser.cjs",
+    "test:uml-editor": "node test/uml-editor.browser.cjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.0",

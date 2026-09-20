@@ -1,33 +1,25 @@
-import type { Edge, Node } from '@xyflow/react'
+import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { Diagram, MoveUmlClassPayload, UmlClass, UmlRelation } from './types'
 
 export type UmlClassNodeData = { umlClass: UmlClass } & Record<string, unknown>
 export type UmlRelationEdgeData = { relation: UmlRelation } & Record<string, unknown>
-
-export interface DiagramFlowModel {
-  nodes: Node<UmlClassNodeData>[]
-  edges: Edge<UmlRelationEdgeData>[]
-}
+export interface DiagramFlowModel { nodes: Node<UmlClassNodeData>[]; edges: Edge<UmlRelationEdgeData>[] }
 
 export function diagramToFlow(diagram: Diagram): DiagramFlowModel {
   return {
     nodes: diagram.classes.map(umlClass => ({
-      id: umlClass.id,
-      position: { x: umlClass.x, y: umlClass.y },
-      data: { umlClass },
-      ...(umlClass.width == null ? {} : { width: umlClass.width }),
-      ...(umlClass.height == null ? {} : { height: umlClass.height }),
+      id: umlClass.id, type: 'umlClass', position: { x: umlClass.x, y: umlClass.y }, data: { umlClass },
+      ...(umlClass.width == null ? {} : { width: umlClass.width }), ...(umlClass.height == null ? {} : { height: umlClass.height }),
     })),
     edges: diagram.relations.map(relation => ({
-      id: relation.id,
-      source: relation.sourceClassId,
-      target: relation.targetClassId,
-      label: relation.label ?? `${relation.sourceMultiplicity} — ${relation.targetMultiplicity}`,
+      id: relation.id, source: relation.sourceClassId, target: relation.targetClassId,
+      label: `${relation.sourceMultiplicity}  ${relation.label ?? relation.type}  ${relation.targetMultiplicity}`,
       data: { relation },
+      markerEnd: relation.type === 'INHERITANCE' || relation.type === 'DEPENDENCY' ? { type: MarkerType.ArrowClosed } : undefined,
+      animated: relation.type === 'DEPENDENCY',
+      style: { strokeWidth: relation.type === 'COMPOSITION' ? 3 : relation.type === 'AGGREGATION' ? 2 : 1.5, strokeDasharray: relation.type === 'DEPENDENCY' ? '6 4' : undefined },
     })),
   }
 }
 
-export function flowNodeToMovePayload(node: Pick<Node, 'position'>): MoveUmlClassPayload {
-  return { x: node.position.x, y: node.position.y }
-}
+export function flowNodeToMovePayload(node: Pick<Node, 'position'>): MoveUmlClassPayload { return { x: node.position.x, y: node.position.y } }

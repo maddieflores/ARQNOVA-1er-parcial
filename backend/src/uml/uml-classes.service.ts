@@ -15,27 +15,28 @@ export class UmlClassesService {
     return this.prisma.umlClass.create({ data: { ...dto, name: dto.name.trim(), diagramId } });
   }
 
-  async get(classId: string, userId: string) {
+  async get(classId: string, userId: string, expectedDiagramId?: string) {
     const umlClass = await this.find(classId);
+    if (expectedDiagramId && umlClass.diagramId !== expectedDiagramId) throw new NotFoundException('Clase UML inexistente');
     await this.diagrams.verifyAccess(umlClass.diagramId, userId);
     return umlClass;
   }
 
-  async update(classId: string, userId: string, input: UpdateUmlClassDto) {
+  async update(classId: string, userId: string, input: UpdateUmlClassDto, expectedDiagramId?: string) {
     const dto = validateDto(UpdateUmlClassDto, input);
     this.requireChanges(dto);
-    await this.get(classId, userId);
+    await this.get(classId, userId, expectedDiagramId);
     return this.prisma.umlClass.update({ where: { id: classId }, data: { ...dto, name: dto.name?.trim() } });
   }
 
-  async move(classId: string, userId: string, input: MoveUmlClassDto) {
+  async move(classId: string, userId: string, input: MoveUmlClassDto, expectedDiagramId?: string) {
     const dto = validateDto(MoveUmlClassDto, input);
-    await this.get(classId, userId);
+    await this.get(classId, userId, expectedDiagramId);
     return this.prisma.umlClass.update({ where: { id: classId }, data: dto });
   }
 
-  async remove(classId: string, userId: string) {
-    await this.get(classId, userId);
+  async remove(classId: string, userId: string, expectedDiagramId?: string) {
+    await this.get(classId, userId, expectedDiagramId);
     return this.prisma.$transaction(async tx => {
       await tx.umlRelation.deleteMany({ where: { OR: [{ sourceClassId: classId }, { targetClassId: classId }] } });
       return tx.umlClass.delete({ where: { id: classId } });
