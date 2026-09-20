@@ -42,3 +42,27 @@ export async function requestJson<T>(path: string, options: RequestOptions = {})
 export function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return requestJson<T>(path, { signal });
 }
+
+export async function requestMultipartJson<T>(path: string, body: FormData): Promise<T> {
+  const response = await authenticatedFetch(path, { method: 'POST', body });
+  try { return await response.json() as T; } catch { throw new ApiError(500, 'Se recibió una respuesta inesperada. Intenta nuevamente.'); }
+}
+
+export async function downloadAuthenticated(path: string): Promise<Blob> {
+  const response = await authenticatedFetch(path, { method: 'GET' });
+  return response.blob();
+}
+
+async function authenticatedFetch(path: string, init: RequestInit): Promise<Response> {
+  const token = sessionStore.getToken();
+  let response: Response;
+  try { response = await fetch(`${API_URL}${path}`, { ...init, headers: { Accept: 'application/xml, application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) } }); }
+  catch { throw new ApiError(0, 'No se pudo contactar con la API. Intenta nuevamente.'); }
+  if (response.ok) return response;
+  if (response.status === 401 && token) sessionStore.clear('Sesión inválida o expirada. Inicia sesión nuevamente.', token);
+  let message = response.status === 401 ? 'Sesión inválida o expirada.' : response.status === 403 ? 'No tienes permiso para realizar esta acción.' : response.status === 409 ? 'La operación entra en conflicto con el estado actual.' : 'Revisa el archivo XMI e intenta nuevamente.';
+  const body = await response.json().catch(() => null) as { message?: unknown } | null;
+  const allowed = ['El archivo XMI contiene XML inválido', 'El archivo no contiene un modelo UML', 'El XMI contiene clases duplicadas', 'El XMI contiene relaciones con clases inexistentes', 'El XMI contiene relaciones duplicadas', 'El XMI contiene una multiplicidad inválida', 'El XMI contiene atributos duplicados', 'El XMI contiene métodos duplicados', 'Selecciona un archivo XMI válido', 'El archivo XMI supera el límite de 2 MB', 'El archivo debe tener extensión .xmi o .xml', 'No se puede importar mientras existen elementos en edición'];
+  if (typeof body?.message === 'string' && allowed.includes(body.message)) message = body.message;
+  throw new ApiError(response.status, message);
+}

@@ -20,7 +20,8 @@
     "test:uml-editor": "npm run build && node --test test/uml-editor.test.cjs",
     "test:collaboration": "npm run build && node --test test/collaboration.test.cjs",
     "test:ai-base": "npm run build && node --test test/ai-base.test.cjs",
-    "test:ai-uml": "npm run build && node --test test/ai-uml.test.cjs"
+    "test:ai-uml": "npm run build && node --test test/ai-uml.test.cjs",
+    "test:xmi": "npm run build && node --test test/xmi.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.3",
@@ -34,6 +35,8 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "fast-xml-parser": "^5.11.1",
+    "multer": "^2.4.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.1"
@@ -41,6 +44,7 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.0.0",
     "prisma": "6.12.0",
     "typescript": "~5.9.2"
