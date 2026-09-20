@@ -10,5 +10,8 @@
   if (secret.length < 32 || secret.startsWith('replace_with_')) throw new Error('JWT_SECRET requiere un secreto local de al menos 32 caracteres');
   const expiresIn = Number(env.JWT_EXPIRES_IN ?? 3600);
   if (!Number.isSafeInteger(expiresIn) || expiresIn <= 0) throw new Error('JWT_EXPIRES_IN debe ser un número positivo de segundos');
-  return { ...env, PORT: port, DATABASE_URL: databaseUrl, CORS_ORIGIN: origin, JWT_SECRET: secret, JWT_EXPIRES_IN: expiresIn };
+  const aiProvider = String(env.AI_PROVIDER ?? 'mock').toLowerCase();
+  const aiTimeoutMs = Number(env.AI_TIMEOUT_MS ?? 10_000);
+  if (!Number.isSafeInteger(aiTimeoutMs) || aiTimeoutMs < 100 || aiTimeoutMs > 120_000) throw new Error('AI_TIMEOUT_MS debe estar entre 100 y 120000 ms');
+  return { ...env, PORT: port, DATABASE_URL: databaseUrl, CORS_ORIGIN: origin, JWT_SECRET: secret, JWT_EXPIRES_IN: expiresIn, AI_PROVIDER: aiProvider, AI_TIMEOUT_MS: aiTimeoutMs };
 }
