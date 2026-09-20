@@ -15,7 +15,8 @@
     "test:collaboration": "node test/collaboration.browser.cjs",
     "test:ai-base": "node test/ai-base.browser.cjs",
     "test:ai-uml": "node test/ai-uml.browser.cjs",
-    "test:xmi": "node test/xmi.browser.cjs"
+    "test:xmi": "node test/xmi.browser.cjs",
+    "test:code-generator": "node test/code-generator.browser.cjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.0",

@@ -21,7 +21,8 @@
     "test:collaboration": "npm run build && node --test test/collaboration.test.cjs",
     "test:ai-base": "npm run build && node --test test/ai-base.test.cjs",
     "test:ai-uml": "npm run build && node --test test/ai-uml.test.cjs",
-    "test:xmi": "npm run build && node --test test/xmi.test.cjs"
+    "test:xmi": "npm run build && node --test test/xmi.test.cjs",
+    "test:code-generator": "npm run build && node --test test/code-generator.test.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.3",
@@ -36,6 +37,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "fast-xml-parser": "^5.11.1",
+    "jszip": "^3.10.2",
     "multer": "^2.4.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",

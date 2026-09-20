@@ -11,9 +11,10 @@ import { UmlModule } from './uml/uml.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
 import { AiModule } from './ai/ai.module';
 import { XmiModule } from './xmi/xmi.module';
+import { CodeGeneratorModule } from './code-generator/code-generator.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }), PrismaModule, AuthModule, AdministrationModule, ProjectsModule, UmlModule, CollaborationModule, AiModule, XmiModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }), PrismaModule, AuthModule, AdministrationModule, ProjectsModule, UmlModule, CollaborationModule, AiModule, XmiModule, CodeGeneratorModule],
   controllers: [HealthController],
   providers: [CollaborationGateway],
 })
