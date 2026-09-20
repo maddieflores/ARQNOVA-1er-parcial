@@ -1,6 +1,6 @@
-# ARQNOVA — Fases 0, 1 y 2
+# ARQNOVA — Fases 0, 1, 2 y 3
 
-Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Actualmente incluye CU01 Autenticación, CU02 Administración de usuarios, CU03 Gestión de proyectos UML y CU04 Gestión de participantes e invitaciones.
+Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Actualmente incluye CU01 Autenticación, CU02 Administración de usuarios, CU03 Gestión de proyectos UML, CU04 Gestión de participantes, CU05 Editor de clases UML y CU06 Colaboración en tiempo real.
 
 ## Tecnologías y requisitos
 
@@ -61,6 +61,7 @@ npm run dev
 - Dashboard protegido: http://localhost:5173/dashboard
 - Proyectos del anfitrión: http://localhost:5173/projects
 - Proyectos compartidos: http://localhost:5173/shared-projects
+- Editor UML: http://localhost:5173/projects/:projectId/editor
 - API: http://localhost:3000/api
 - Health: http://localhost:3000/api/health
 - Socket.IO: namespace /collaboration en http://localhost:3000 (no /api/collaboration).
@@ -81,7 +82,7 @@ docker compose config --quiet
 Invoke-RestMethod http://localhost:3000/api/health
 ```
 
-Health debe devolver status=ok y service=arqnova-api. Abrir inicio o dashboard tras iniciar sesión y verificar el mismo resultado y Servidor realtime: conectado. Al cerrar la página, NestJS registra Cliente desconectado. Visitar una ruta inexistente para comprobar 404. La interfaz usa utilidades Tailwind; React Flow está instalado y sus estilos cargados, sin editor UML.
+Health debe devolver status=ok y service=arqnova-api. Abrir el editor con un anfitrión propietario o colaborador miembro y verificar `Realtime: conectado`. React Flow reconstruye el diagrama persistido en PostgreSQL y Socket.IO transmite los cambios confirmados entre usuarios conectados al mismo proyecto.
 
 docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -v si se desea conservar los datos. Cambiar POSTGRES_PASSWORD después de inicializar el volumen no cambia automáticamente la contraseña almacenada en PostgreSQL.
 
@@ -145,6 +146,25 @@ npm run test:participants
 # Frontend, con backend y frontend activos
 npm run test:projects
 npm run test:participants
+```
+
+## Fase 3 — Editor UML y colaboración
+
+CU05 permite crear, editar, mover y eliminar clases, atributos, métodos y relaciones UML desde `/projects/:projectId/editor`. Las posiciones, multiplicidades y demás elementos se guardan en PostgreSQL.
+
+CU06 sincroniza el editor mediante el namespace Socket.IO `/collaboration`. Las rooms se aíslan por proyecto, muestran presencia y usan locks temporales para impedir edición simultánea del mismo elemento. PostgreSQL sigue siendo la fuente de verdad.
+
+Consultar [docs/PHASE_3_SUMMARY.md](docs/PHASE_3_SUMMARY.md), [docs/UML_BASE_PHASE_3A.md](docs/UML_BASE_PHASE_3A.md), [docs/UML_EDITOR_PHASE_3B.md](docs/UML_EDITOR_PHASE_3B.md) y [docs/COLLABORATION_PHASE_3C.md](docs/COLLABORATION_PHASE_3C.md).
+
+```powershell
+# Backend
+npm run test:uml-base
+npm run test:uml-editor
+npm run test:collaboration
+
+# Frontend, con backend y frontend activos
+npm run test:uml-editor
+npm run test:collaboration
 ```
 
 No iniciar una fase posterior sin autorización.
