@@ -15,13 +15,14 @@ interface Props {
   onCreateMethod: (value: UmlMethodInput) => Promise<unknown>
   onUpdateMethod: (id: string, value: UmlMethodInput) => Promise<unknown>
   onDeleteMethod: (id: string) => Promise<unknown>
+  onClose: () => void
 }
 
 export function UmlPropertiesPanel(props: Props) {
   const [name, setName] = useState(props.umlClass.name); const [isAbstract, setAbstract] = useState(props.umlClass.isAbstract)
-  useEffect(() => { setName(props.umlClass.name); setAbstract(props.umlClass.isAbstract) }, [props.umlClass])
+  useEffect(() => { setName(props.umlClass.name); setAbstract(props.umlClass.isAbstract) }, [props.umlClass.id])
   return <aside className="w-full overflow-y-auto border-l bg-white p-4 lg:w-80" aria-label="Propiedades de clase">
-    <h2 className="text-lg font-bold">Clase UML</h2>
+    <div className="flex items-center justify-between"><h2 className="text-lg font-bold">Clase UML</h2><button type="button" className="text-sm underline" onClick={props.onClose}>Cerrar</button></div>
     <form className="mt-3 space-y-3" onSubmit={event => { event.preventDefault(); void props.onUpdateClass({ name, isAbstract }) }}>
       <label className="block text-sm font-medium">Nombre<input aria-label="Nombre de clase" className="mt-1 w-full rounded border p-2" required maxLength={120} value={name} onChange={event => setName(event.target.value)}/></label>
       <label className="flex gap-2 text-sm"><input type="checkbox" checked={isAbstract} onChange={event => setAbstract(event.target.checked)}/>Clase abstracta</label>

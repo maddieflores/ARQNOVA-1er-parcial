@@ -16,5 +16,6 @@ export function UmlClassNode({ data, selected }: NodeProps) {
       {umlClass.methods.length === 0 ? <span className="text-slate-400">Sin métodos</span> : umlClass.methods.map(method => <div key={method.id}>{symbol[method.visibility]} {method.name}(): {method.returnType}</div>)}
     </div>
     <Handle type="source" position={Position.Bottom}/>
+    {(data as UmlClassNodeData).lockedBy && <div className="absolute -right-2 -top-3 rounded bg-amber-100 px-2 py-1 text-[10px] font-medium text-amber-900 shadow">Editando: {(data as UmlClassNodeData).lockedBy}</div>}
   </div>
 }

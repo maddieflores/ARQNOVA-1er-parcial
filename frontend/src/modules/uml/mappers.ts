@@ -1,7 +1,7 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { Diagram, MoveUmlClassPayload, UmlClass, UmlRelation } from './types'
 
-export type UmlClassNodeData = { umlClass: UmlClass } & Record<string, unknown>
+export type UmlClassNodeData = { umlClass: UmlClass; lockedBy?: string } & Record<string, unknown>
 export type UmlRelationEdgeData = { relation: UmlRelation } & Record<string, unknown>
 export interface DiagramFlowModel { nodes: Node<UmlClassNodeData>[]; edges: Edge<UmlRelationEdgeData>[] }
 
