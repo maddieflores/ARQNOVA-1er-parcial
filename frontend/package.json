@@ -13,7 +13,8 @@
     "test:participants": "node test/participants.browser.cjs",
     "test:uml-editor": "node test/uml-editor.browser.cjs",
     "test:collaboration": "node test/collaboration.browser.cjs",
-    "test:ai-base": "node test/ai-base.browser.cjs"
+    "test:ai-base": "node test/ai-base.browser.cjs",
+    "test:ai-uml": "node test/ai-uml.browser.cjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.0",

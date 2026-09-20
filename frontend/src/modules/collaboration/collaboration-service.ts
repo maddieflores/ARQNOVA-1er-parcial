@@ -9,7 +9,7 @@ interface Ack<T> { ok: boolean; data?: T; status?: number; message?: string }
 interface RealtimeChange { projectId: string; diagram: Diagram; originUserId: string; persistedAt: string }
 type Listener<T> = (value: T) => void
 
-const changeEvents = ['uml:class:created', 'uml:class:updated', 'uml:class:moved', 'uml:class:deleted', 'uml:attribute:created', 'uml:attribute:updated', 'uml:attribute:deleted', 'uml:method:created', 'uml:method:updated', 'uml:method:deleted', 'uml:relation:created', 'uml:relation:updated', 'uml:relation:deleted']
+const changeEvents = ['uml:diagram:updated', 'uml:class:created', 'uml:class:updated', 'uml:class:moved', 'uml:class:deleted', 'uml:attribute:created', 'uml:attribute:updated', 'uml:attribute:deleted', 'uml:method:created', 'uml:method:updated', 'uml:method:deleted', 'uml:relation:created', 'uml:relation:updated', 'uml:relation:deleted']
 
 class CollaborationClient {
   private socket: Socket | null = null; private projectId: string | null = null; private token = ''

@@ -42,8 +42,14 @@ export class AiUmlProposalService {
       const methods = new Set<string>();
       for (const method of umlClass.methods) { const name = method.name.trim().toLocaleLowerCase(); if (methods.has(name)) throw new BadGatewayException(`La clase ${umlClass.name} contiene métodos duplicados`); methods.add(name); }
     }
+    const relations = new Set<string>();
     for (const relation of proposal.relations) {
-      if (!classNames.has(relation.sourceClassName.trim().toLocaleLowerCase()) || !classNames.has(relation.targetClassName.trim().toLocaleLowerCase())) throw new BadGatewayException('La propuesta contiene una relación con clases inexistentes');
+      const source = relation.sourceClassName.trim().toLocaleLowerCase();
+      const target = relation.targetClassName.trim().toLocaleLowerCase();
+      if (!classNames.has(source) || !classNames.has(target)) throw new BadGatewayException('La propuesta contiene una relación con clases inexistentes');
+      const key = `${source}:${target}:${relation.type}`;
+      if (relations.has(key)) throw new BadGatewayException('La propuesta contiene relaciones duplicadas');
+      relations.add(key);
     }
   }
 

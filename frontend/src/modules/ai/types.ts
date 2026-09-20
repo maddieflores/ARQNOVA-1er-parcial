@@ -6,3 +6,7 @@ export interface AiUmlMethod { name: string; returnType: string; visibility: AiV
 export interface AiUmlClass { name: string; attributes: AiUmlAttribute[]; methods: AiUmlMethod[] }
 export interface AiUmlRelation { sourceClassName: string; targetClassName: string; type: AiRelationType; sourceMultiplicity?: string; targetMultiplicity?: string; label?: string }
 export interface AiUmlProposal { classes: AiUmlClass[]; relations: AiUmlRelation[] }
+export interface AiApplyResult {
+  created: { classes: number; attributes: number; methods: number; relations: number }
+  diagram: import('../uml/types').Diagram
+}
