@@ -1,15 +1,14 @@
-﻿# Fases del proyecto
+# Fases del proyecto
 
-| Fase | Alcance |
-| --- | --- |
-| 0 | Base técnica y entorno de desarrollo. |
-| 1 | Autenticación, usuarios, roles y permisos (CU01/CU02). |
-| 2 | Proyectos y participantes. |
-| 3 | Editor UML. |
-| 4 | Colaboración y concurrencia. |
-| 5 | IA texto/voz e imagen. |
-| 6 | XMI y diseño de datos. |
-| 7 | Generación Spring Boot + Postman. |
-| 8 | Aplicación móvil offline, voz y sincronización. |
+| Fase | Estado | Alcance entregado |
+| --- | --- | --- |
+| 0 | Completa | Base técnica, paquetes, Docker y PostgreSQL. |
+| 1 | Completa | CU01 autenticación; CU02 usuarios, roles y permisos. |
+| 2 | Completa | CU03 proyectos; CU04 participantes e invitaciones. |
+| 3 | Completa | CU05 editor UML; CU06 colaboración realtime. |
+| 4A–4B | Completa | CU07 propuestas UML y aplicación transaccional. |
+| 4C | Completa | Importación y exportación XMI 2.5.1. |
+| 4D | Completa | Generación Spring Boot y ZIP. |
+| 4E | Cierre técnico | Documentación, regresión unificada, compilación Maven y endurecimiento acotado. |
 
-El orden puede ajustarse posteriormente. No iniciar Fase 1 sin autorización. En Fase 0 los directorios reservados no equivalen a funcionalidades implementadas.
+Fase 4E no incorpora móvil, voz, OCR, IA multimodal ni una arquitectura nueva. El proveedor de IA funcional en este alcance es el mock determinista; la integración con un proveedor externo queda fuera del cierre.

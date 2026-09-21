@@ -3,15 +3,16 @@ import type { UmlRelationType, UmlVisibility } from '@prisma/client';
 import JSZip from 'jszip';
 import { DiagramsService } from '../uml/diagrams.service';
 import type { GeneratedBackend, GeneratedFile, JavaClassModel, JavaField } from './code-generator.types';
-import { controllerTemplate, dtoTemplate, entityTemplate, repositoryTemplate, serviceTemplate } from './templates/java.templates';
+import { controllerTemplate, dtoTemplate, entityTemplate, exceptionHandlerTemplate, repositoryTemplate, serviceTemplate } from './templates/java.templates';
 import { applicationTemplate, pomTemplate, propertiesTemplate } from './templates/project.templates';
+import { GeneratedBackendValidator } from './generated-backend-validator.service';
 
 const ROOT = 'generated-backend/';
 const JAVA_ROOT = `${ROOT}src/main/java/com/arqnova/generated/`;
 
 @Injectable()
 export class CodeGeneratorService {
-  constructor(private readonly diagrams: DiagramsService) {}
+  constructor(private readonly diagrams: DiagramsService, private readonly validator: GeneratedBackendValidator) {}
 
   async generate(projectId: string, userId: string): Promise<GeneratedBackend> {
     const diagram = await this.diagrams.getByProject(projectId, userId);
@@ -23,8 +24,9 @@ export class CodeGeneratorService {
     const files: GeneratedFile[] = [
       { path: `${ROOT}pom.xml`, content: pomTemplate(artifactId) },
       { path: `${JAVA_ROOT}GeneratedBackendApplication.java`, content: applicationTemplate },
+      { path: `${JAVA_ROOT}error/GlobalExceptionHandler.java`, content: exceptionHandlerTemplate },
       { path: `${ROOT}src/main/resources/application.properties`, content: propertiesTemplate },
-      { path: `${ROOT}README.md`, content: `# ${diagram.name}\n\nBackend Spring Boot generado por ARQNOVA.\n\n## Ejecución\n\nConfigura DB_URL, DB_USER y DB_PASSWORD y ejecuta \`mvn spring-boot:run\`.\n` },
+      { path: `${ROOT}README.md`, content: `# ${diagram.name}\n\nBackend Spring Boot generado y compilado por ARQNOVA. Requiere Java 21, Maven 3.9+ y PostgreSQL.\n\n## Configuración\n\nDefine \`DB_URL\`, \`DB_USER\` y \`DB_PASSWORD\`. Los valores predeterminados apuntan a \`jdbc:postgresql://localhost:5432/generated_backend\`.\n\n## Verificación y ejecución\n\n\`\`\`bash\nmvn test\nmvn spring-boot:run\n\`\`\`\n\nLa API REST se publica bajo \`/api/<entidad>\`. Las entidades incluyen validaciones básicas y los errores de recurso inexistente o datos inválidos tienen respuestas HTTP controladas.\n` },
     ];
     for (const model of models) files.push(
       { path: `${JAVA_ROOT}model/${model.name}.java`, content: entityTemplate(model) },
@@ -37,9 +39,15 @@ export class CodeGeneratorService {
   }
 
   async generateZip(projectId: string, userId: string) {
-    const generated = await this.generate(projectId, userId); const zip = new JSZip();
+    const generated = await this.generateValidated(projectId, userId); const zip = new JSZip();
     for (const file of generated.files) zip.file(file.path, file.content);
     return { filename: 'generated-backend.zip', buffer: await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } }) };
+  }
+
+  async generateValidated(projectId: string, userId: string) {
+    const generated = await this.generate(projectId, userId);
+    await this.validator.validate(generated);
+    return generated;
   }
 
   private toJavaModel(umlClass: any, relations: any[], names: Map<string, string>): JavaClassModel {
@@ -48,7 +56,7 @@ export class CodeGeneratorService {
     const fields: JavaField[] = []; const used = new Set<string>();
     let primary = umlClass.attributes.find((attribute: any) => attribute.isPrimaryKey) ?? umlClass.attributes.find((attribute: any) => this.fieldName(attribute.name) === 'id');
     if (!inheritance && !primary) { fields.push({ name: 'id', type: 'Long', visibility: 'private', annotations: ['@Id', '@GeneratedValue(strategy = GenerationType.IDENTITY)'] }); used.add('id'); }
-    for (const attribute of umlClass.attributes) { const field = this.fieldName(attribute.name); if (used.has(field)) throw new ConflictException(`La clase ${name} contiene campos incompatibles para Java`); used.add(field); const mapped = this.javaType(attribute.type, classNames); for (const value of mapped.imports) imports.add(value); const annotations = attribute === primary && !inheritance ? ['@Id'] : []; fields.push({ name: field, type: mapped.type, visibility: this.visibility(attribute.visibility), annotations, umlType: mapped.original }); }
+    for (const attribute of umlClass.attributes) { const field = this.fieldName(attribute.name); if (used.has(field)) throw new ConflictException(`La clase ${name} contiene campos incompatibles para Java`); used.add(field); const mapped = this.javaType(attribute.type, classNames); for (const value of mapped.imports) imports.add(value); const annotations = attribute === primary && !inheritance ? ['@Id'] : []; annotations.push(mapped.type === 'String' ? '@NotBlank' : '@NotNull'); imports.add(mapped.type === 'String' ? 'jakarta.validation.constraints.NotBlank' : 'jakarta.validation.constraints.NotNull'); fields.push({ name: field, type: mapped.type, visibility: this.visibility(attribute.visibility), annotations, umlType: mapped.original }); }
     for (const relation of relations.filter(relation => relation.sourceClassId === umlClass.id && relation.type !== 'INHERITANCE')) { const target = names.get(relation.targetClassId); if (!target) continue; const fieldBase = this.fieldName(relation.label || target); const many = this.isMany(relation.targetMultiplicity); const field = many ? `${fieldBase}List` : fieldBase; if (used.has(field)) throw new ConflictException(`La clase ${name} contiene relaciones incompatibles para Java`); used.add(field); const annotations: string[] = []; let type = target; let initializer: string | undefined;
       if (relation.type === 'DEPENDENCY') annotations.push('@Transient'); else if (many) { annotations.push(relation.type === 'COMPOSITION' ? '@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)' : '@OneToMany'); type = `List<${target}>`; initializer = 'new ArrayList<>()'; imports.add('java.util.List'); imports.add('java.util.ArrayList'); } else annotations.push(relation.type === 'COMPOSITION' ? '@ManyToOne(cascade = CascadeType.ALL)' : '@ManyToOne');
       fields.push({ name: field, type, visibility: 'private', annotations, initializer });

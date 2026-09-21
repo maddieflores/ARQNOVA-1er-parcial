@@ -6,6 +6,7 @@ export const pomTemplate = (artifactId: string) => `<?xml version="1.0" encoding
   <properties><java.version>21</java.version></properties>
   <dependencies>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
     <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
     <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
     <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
@@ -32,4 +33,6 @@ spring.datasource.username=\${DB_USER:postgres}
 spring.datasource.password=\${DB_PASSWORD:postgres}
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
+spring.jpa.properties.hibernate.format_sql=true
+server.error.include-message=never
 `;

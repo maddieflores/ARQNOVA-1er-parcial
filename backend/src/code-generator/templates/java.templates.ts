@@ -55,6 +55,7 @@ import com.arqnova.generated.model.${name};
 import com.arqnova.generated.service.${name}Service;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -64,8 +65,8 @@ public class ${name}Controller {
     public ${name}Controller(${name}Service service) { this.service = service; }
     @GetMapping public List<${name}> findAll() { return service.findAll(); }
     @GetMapping("/{id}") public ${name} findById(@PathVariable ${idType} id) { return service.findById(id); }
-    @PostMapping public ${name} create(@RequestBody ${name} value) { return service.save(value); }
-    @PutMapping("/{id}") public ${name} update(@PathVariable ${idType} id, @RequestBody ${name} value) { return service.save(value); }
+    @PostMapping public ${name} create(@Valid @RequestBody ${name} value) { return service.save(value); }
+    @PutMapping("/{id}") public ${name} update(@PathVariable ${idType} id, @Valid @RequestBody ${name} value) { return service.save(value); }
     @DeleteMapping("/{id}") public ResponseEntity<Void> delete(@PathVariable ${idType} id) { service.delete(id); return ResponseEntity.noContent().build(); }
 }
 `;
@@ -73,10 +74,44 @@ public class ${name}Controller {
 export const dtoTemplate = (model: JavaClassModel) => `package com.arqnova.generated.dto;
 
 import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 ${model.imports.map(value => `import ${value};`).join('\n')}
 
 @Data
 public class ${model.name}Dto {
-${indent(model.fields.filter(field => !field.annotations.some(annotation => annotation.startsWith('@One') || annotation.startsWith('@Many') || annotation === '@Transient')).map(field => `private ${field.type} ${field.name};`).join('\n'))}
+${indent(model.fields.filter(field => !field.annotations.some(annotation => annotation.startsWith('@One') || annotation.startsWith('@Many') || annotation === '@Transient')).map(field => `${field.annotations.filter(annotation => annotation === '@NotBlank' || annotation === '@NotNull').join('\n')}${field.annotations.some(annotation => annotation === '@NotBlank' || annotation === '@NotNull') ? '\n' : ''}private ${field.type} ${field.name};`).join('\n'))}
+}
+`;
+
+export const exceptionHandlerTemplate = `package com.arqnova.generated.error;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Map<String, Object>> notFound(NoSuchElementException error) {
+        return response(HttpStatus.NOT_FOUND, "Recurso inexistente");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> validation(MethodArgumentNotValidException error) {
+        return response(HttpStatus.BAD_REQUEST, "La solicitud contiene datos inválidos");
+    }
+
+    private ResponseEntity<Map<String, Object>> response(HttpStatus status, String message) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", status.value());
+        body.put("message", message);
+        return ResponseEntity.status(status).body(body);
+    }
 }
 `;

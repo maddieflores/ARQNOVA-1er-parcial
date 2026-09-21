@@ -1,16 +1,57 @@
-# ARQNOVA — Fases 0, 1, 2 y 3
+# ARQNOVA — Fases 0 a 4E
 
-Plataforma CASE web colaborativa inteligente para modelado UML y generación automática de software. Actualmente incluye CU01 Autenticación, CU02 Administración de usuarios, CU03 Gestión de proyectos UML, CU04 Gestión de participantes, CU05 Editor de clases UML y CU06 Colaboración en tiempo real.
+ARQNOVA es una plataforma CASE web colaborativa para diseñar diagramas UML de clases, trabajar en tiempo real, generar propuestas UML asistidas, intercambiar modelos XMI y producir un backend Java/Spring Boot descargable.
 
-## Tecnologías y requisitos
+## Arquitectura y tecnologías
 
-React, Vite, TypeScript, Tailwind CSS 4, React Flow; NestJS 12, Prisma 6.12, JWT, bcrypt y Socket.IO; PostgreSQL 17 mediante Docker Compose. NestJS es el backend de ARQNOVA. Java + Spring Boot será el backend generado en una fase futura.
+```text
+React + React Flow + Socket.IO Client
+              | REST / WebSocket
+NestJS + JWT + Socket.IO + Prisma
+              | SQL
+          PostgreSQL 17
 
-Instalar Node.js 22.19 o superior compatible, npm y Docker Desktop con contenedores Linux. Iniciar Docker Desktop antes de levantar PostgreSQL. No se necesita Flutter ni Java para esta fase.
+Modelo UML -> generador -> Java 21 + Spring Boot + JPA + PostgreSQL
+```
 
-## Configuración inicial (PowerShell)
+- Frontend: React 19, Vite 6, TypeScript 5.9, Tailwind CSS 4, React Flow y Playwright.
+- Backend: NestJS 12, Prisma 6.12, JWT, bcrypt, Socket.IO, JSZip y fast-xml-parser.
+- Datos: PostgreSQL 17 mediante Docker Compose.
+- Generado: Java 21, Maven, Spring Boot 3.3, Spring Web, Bean Validation, Spring Data JPA, PostgreSQL y Lombok.
 
-Desde C:\Proyectos\ARQNOVA, copiar los ejemplos solo si no existen archivos .env:
+NestJS es el backend de ARQNOVA. Spring Boot es el producto generado desde el modelo UML.
+
+## Funcionalidades implementadas
+
+| Caso de uso | Alcance |
+| --- | --- |
+| CU01 | Autenticación JWT, recuperación de sesión y cierre de sesión. |
+| CU02 | Usuarios, roles, activación, desactivación y protección del último administrador. |
+| CU03 | Proyectos UML con propiedad y borrado lógico. |
+| CU04 | Participantes, invitaciones con token protegido y proyectos compartidos. |
+| CU05 | Editor UML persistente: clases, atributos, métodos, relaciones y posiciones. |
+| CU06 | Colaboración realtime: rooms, presencia, sincronización, locks y TTL. |
+| CU07 | Propuestas UML estructuradas y aplicación aditiva transaccional. |
+
+También están implementados:
+
+- importación y exportación del subconjunto XMI 2.5.1 soportado por ARQNOVA;
+- generación y descarga ZIP de un backend Spring Boot;
+- compilación Maven temporal obligatoria antes de informar una generación exitosa;
+- validaciones Bean Validation, manejo HTTP básico de errores y configuración PostgreSQL en el proyecto generado.
+
+La integración IA disponible usa `AI_PROVIDER=mock`: valida el contrato y el flujo completo sin enviar información a un proveedor externo. Voz, OCR, IA multimodal y aplicación móvil no forman parte de las Fases 0–4E.
+
+## Requisitos
+
+- Node.js 22.19 o compatible y npm.
+- Docker Desktop con contenedores Linux para PostgreSQL.
+- Java 21 y Maven 3.9 o superior para validar y descargar backends generados.
+- Google Chrome para las pruebas Playwright actuales.
+
+## Configuración local
+
+Desde la raíz, crear únicamente los archivos que todavía no existan:
 
 ```powershell
 Copy-Item .env.example .env
@@ -18,153 +59,59 @@ Copy-Item backend/.env.example backend/.env
 Copy-Item frontend/.env.example frontend/.env
 ```
 
-Editar .env y elegir una contraseña local de PostgreSQL. En backend/.env, usar esa misma contraseña en DATABASE_URL (codificar caracteres especiales como URL). Configurar JWT_SECRET con un valor aleatorio local de al menos 32 caracteres. Para el seed de Fase 1A, definir también ADMIN_* según docs/SECURITY_PHASE_1A.md. Los .env están ignorados; los ejemplos contienen únicamente marcadores. Ningún secreto backend debe llevar prefijo VITE_, porque las variables VITE_ son públicas.
-
-- Raíz: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB para Compose.
-- Backend: DATABASE_URL, PORT=3000, CORS_ORIGIN=http://localhost:5173, JWT_SECRET y JWT_EXPIRES_IN.
-- Frontend: VITE_API_URL=http://localhost:3000/api, VITE_SOCKET_URL=http://localhost:3000.
-
-## PostgreSQL, dependencias y migraciones
+Configurar la misma contraseña PostgreSQL en `.env` y `backend/.env`, un `JWT_SECRET` aleatorio de al menos 32 caracteres y `ADMIN_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD`. Los `.env` están ignorados por Git. Ningún secreto backend debe usar el prefijo público `VITE_`.
 
 ```powershell
-docker compose config --quiet
 docker compose up -d
 npm ci --prefix backend
 npm ci --prefix frontend
-Set-Location backend
-npx prisma validate
-npx prisma generate
-npx prisma migrate dev
-Set-Location ..
+npm run prisma:generate --prefix backend
+npm run prisma:migrate:deploy --prefix backend
+npm run prisma:seed --prefix backend
 ```
 
-Las migraciones versionadas crean `User`, `Role`, `Project`, `ProjectMember` y `ProjectInvitation`. El seed crea los tres roles y el administrador mediante variables locales; ver docs/SECURITY_PHASE_1A.md. En una copia nueva, `migrate dev` aplica todo el historial. No usar `db push` como sustituto de las migraciones.
+## Ejecución
 
-## Ejecutar en dos terminales
-
-Backend, desde la raíz:
+En dos terminales:
 
 ```powershell
-Set-Location backend
-npm run start:dev
-```
-
-Frontend, en otra terminal desde la raíz:
-
-```powershell
-Set-Location frontend
-npm run dev
+npm run start:dev --prefix backend
+npm run dev --prefix frontend
 ```
 
 - Web: http://localhost:5173
-- Login: http://localhost:5173/login
-- Dashboard protegido: http://localhost:5173/dashboard
-- Proyectos del anfitrión: http://localhost:5173/projects
-- Proyectos compartidos: http://localhost:5173/shared-projects
-- Editor UML: http://localhost:5173/projects/:projectId/editor
 - API: http://localhost:3000/api
 - Health: http://localhost:3000/api/health
-- Socket.IO: namespace /collaboration en http://localhost:3000 (no /api/collaboration).
-- PostgreSQL: localhost:5433 (5432 interno del contenedor).
+- Socket.IO: namespace `/collaboration` en http://localhost:3000
+- PostgreSQL: localhost:5433
 
-No se cambian puertos automáticamente; Vite usa strictPort. Si hay un puerto ocupado, resolverlo antes de continuar. El backend requiere PostgreSQL accesible para iniciar.
+Rutas principales: `/login`, `/dashboard`, `/admin/users`, `/projects`, `/shared-projects` y `/projects/:id/editor`.
 
 ## Verificación
 
+La regresión completa compila ambos paquetes, ejecuta todas las pruebas backend, prepara la base local, levanta temporalmente backend/frontend y ejecuta las pruebas Playwright:
+
 ```powershell
-npm run build --prefix frontend
-npm run build --prefix backend
-Set-Location backend
-npx prisma validate
-npx prisma migrate status
-Set-Location ..
-docker compose config --quiet
-Invoke-RestMethod http://localhost:3000/api/health
+npm run test:all
 ```
 
-Health debe devolver status=ok y service=arqnova-api. Abrir el editor con un anfitrión propietario o colaborador miembro y verificar `Realtime: conectado`. React Flow reconstruye el diagrama persistido en PostgreSQL y Socket.IO transmite los cambios confirmados entre usuarios conectados al mismo proyecto.
+También pueden ejecutarse por separado:
 
-docker compose down detiene PostgreSQL y conserva el volumen. No utilizar down -v si se desea conservar los datos. Cambiar POSTGRES_PASSWORD después de inicializar el volumen no cambia automáticamente la contraseña almacenada en PostgreSQL.
+```powershell
+npm run test:backend
+npm run test:frontend  # requiere backend y frontend activos
+npm run build
+npm run prisma:validate --prefix backend
+```
+
+Las pruebas backend crean esquemas PostgreSQL temporales aislados. La validación del generador extrae el proyecto en el directorio temporal del sistema, ejecuta Maven y elimina siempre el contenido temporal.
 
 ## Documentación
 
-Ver docs/PROJECT_CONTEXT.md, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, docs/PHASES.md y los resúmenes técnicos por fase. `mobile` continúa reservado para Flutter.
+- [Contexto del proyecto](docs/PROJECT_CONTEXT.md)
+- [Arquitectura](docs/ARCHITECTURE.md)
+- [Fases](docs/PHASES.md)
+- [Reporte final de Fase 4](docs/PHASE_4_FINAL_REPORT.md)
+- [Desarrollo](docs/DEVELOPMENT.md)
 
-
-
-## Fase 1A — Base de seguridad
-
-La base de Fase 0 se conserva. Se agregan servicios internos de usuarios/roles, DTOs, bcrypt, configuración JWT y seed idempotente de desarrollo. No hay login ni endpoints CRUD. Seguir [docs/SECURITY_PHASE_1A.md](docs/SECURITY_PHASE_1A.md) para configurar JWT_SECRET, JWT_EXPIRES_IN y ADMIN_* antes de ejecutar el seed:
-
-```powershell
-Set-Location backend
-npx prisma migrate dev
-npx prisma generate
-npm run prisma:seed
-npm run test:security
-```
-
-## Fase 1B — Autenticación
-
-POST /api/auth/login y GET /api/auth/me implementan CU01. Abrir /login con ADMIN_EMAIL y ADMIN_PASSWORD configurados localmente; el dashboard requiere autenticación y permite cerrar sesión. La sesión guarda únicamente el JWT en localStorage y se verifica con /auth/me al recargar. Ver [docs/AUTH_PHASE_1B.md](docs/AUTH_PHASE_1B.md) para endpoints, sesión y pruebas.
-
-Desde backend: `npm run test:auth`. Desde frontend, con ambos servidores activos y Chrome instalado: `npm run test:auth`.
-
-## Fase 1C — Gestión de usuarios
-
-Entrar como ADMINISTRADOR y abrir /admin/users. Permite listar, buscar, crear, editar, asignar roles y activar/desactivar. No hay registro público, eliminación física ni cambios de contraseña por edición. ANFITRION/COLABORADOR tienen acceso administrativo bloqueado en frontend y backend. Se protege al último administrador activo incluso ante solicitudes concurrentes.
-
-Consultar [docs/USERS_PHASE_1C.md](docs/USERS_PHASE_1C.md). Pruebas: npm run test:users en backend y frontend; el navegador requiere ambos servidores activos.
-
-## Cierre de Fase 1
-
-La trazabilidad de CU01/CU02, arquitectura de seguridad, variables, endpoints y resultados finales está en [docs/PHASE_1_SUMMARY.md](docs/PHASE_1_SUMMARY.md).
-
-```powershell
-# Backend
-npm run test:security
-npm run test:auth
-npm run test:users
-
-# Frontend, con ambos servidores activos
-npm run test:auth
-npm run test:users
-```
-
-## Fase 2 — Proyectos y participantes
-
-El rol `ANFITRION` gestiona sus proyectos desde `/projects` y sus participantes desde el detalle de cada proyecto. El propietario proviene del JWT y el borrado es lógico. Las invitaciones se crean para usuarios registrados, almacenan únicamente el hash del token y se aceptan desde `/invitations/:token`. El rol `COLABORADOR` consulta sus membresías en `/shared-projects`.
-
-Consultar [docs/PHASE_2_SUMMARY.md](docs/PHASE_2_SUMMARY.md), [docs/PROJECTS_BASE_PHASE_2A.md](docs/PROJECTS_BASE_PHASE_2A.md), [docs/PROJECTS_PHASE_2B.md](docs/PROJECTS_PHASE_2B.md) y [docs/PARTICIPANTS_PHASE_2C.md](docs/PARTICIPANTS_PHASE_2C.md).
-
-```powershell
-# Backend
-npm run test:projects-base
-npm run test:projects
-npm run test:participants
-
-# Frontend, con backend y frontend activos
-npm run test:projects
-npm run test:participants
-```
-
-## Fase 3 — Editor UML y colaboración
-
-CU05 permite crear, editar, mover y eliminar clases, atributos, métodos y relaciones UML desde `/projects/:projectId/editor`. Las posiciones, multiplicidades y demás elementos se guardan en PostgreSQL.
-
-CU06 sincroniza el editor mediante el namespace Socket.IO `/collaboration`. Las rooms se aíslan por proyecto, muestran presencia y usan locks temporales para impedir edición simultánea del mismo elemento. PostgreSQL sigue siendo la fuente de verdad.
-
-Consultar [docs/PHASE_3_SUMMARY.md](docs/PHASE_3_SUMMARY.md), [docs/UML_BASE_PHASE_3A.md](docs/UML_BASE_PHASE_3A.md), [docs/UML_EDITOR_PHASE_3B.md](docs/UML_EDITOR_PHASE_3B.md) y [docs/COLLABORATION_PHASE_3C.md](docs/COLLABORATION_PHASE_3C.md).
-
-```powershell
-# Backend
-npm run test:uml-base
-npm run test:uml-editor
-npm run test:collaboration
-
-# Frontend, con backend y frontend activos
-npm run test:uml-editor
-npm run test:collaboration
-```
-
-No iniciar una fase posterior sin autorización.
+No usar `docker compose down -v` si se desea conservar la base local.

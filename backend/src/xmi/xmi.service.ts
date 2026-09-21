@@ -41,6 +41,9 @@ export class XmiService {
     if (this.collaboration.getLocks(projectId).length) throw new ConflictException('No se puede importar mientras existen elementos en edición');
     const xml = file.buffer.toString('utf8').replace(/^\uFEFF/, '');
     const model = this.parse(xml);
+    // El resumen se calcula únicamente después de validar por completo estructura,
+    // identificadores y referencias. Ninguna escritura ocurre antes de este punto.
+    const summary = this.summarize(model);
 
     await this.prisma.$transaction(async transaction => {
       const project = await transaction.project.findFirst({ where: { id: projectId, deletedAt: null }, select: { name: true } });
@@ -59,7 +62,7 @@ export class XmiService {
 
     const diagram = await this.diagrams.getByProject(projectId, userId);
     this.collaboration.publish(projectId, 'uml:diagram:updated', diagram, userId);
-    return { imported: { classes: model.classes.length, attributes: model.classes.reduce((sum, item) => sum + item.attributes.length, 0), methods: model.classes.reduce((sum, item) => sum + item.methods.length, 0), relations: model.relations.length }, diagram };
+    return { imported: summary, diagram };
   }
 
   parse(xml: string): XmiModel {
@@ -116,5 +119,6 @@ export class XmiService {
   private array<T>(value: T | T[] | undefined): T[] { return value === undefined ? [] : Array.isArray(value) ? value : [value]; }
   private localType(value: unknown) { return String(value ?? '').split(':').pop() ?? ''; }
   private key(value: string) { return value.trim().toLocaleLowerCase(); }
+  private summarize(model: XmiModel) { return Object.freeze({ classes: model.classes.length, attributes: model.classes.reduce((sum, item) => sum + item.attributes.length, 0), methods: model.classes.reduce((sum, item) => sum + item.methods.length, 0), relations: model.relations.length }); }
   private safeFilename(value: string) { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'arqnova-diagram'; }
 }

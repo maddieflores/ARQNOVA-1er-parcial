@@ -1,0 +1,11 @@
+{
+  "name": "arqnova",
+  "version": "4.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "test:backend": "npm run test:all --prefix backend",
+    "test:frontend": "npm run test:all --prefix frontend",
+    "test:all": "node scripts/test-all.cjs"
+  }
+}

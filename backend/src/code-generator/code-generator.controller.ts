@@ -11,7 +11,7 @@ export class CodeGeneratorController {
 
   @Post('generate')
   async generate(@Param('projectId') projectId: string, @Req() request: AuthenticatedRequest) {
-    const generated = await this.generator.generate(projectId, request.user!.id);
+    const generated = await this.generator.generateValidated(projectId, request.user!.id);
     return { projectName: generated.projectName, classCount: generated.classCount, fileCount: generated.files.length, files: generated.files.map(file => file.path) };
   }
 

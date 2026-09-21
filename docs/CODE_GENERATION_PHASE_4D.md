@@ -13,7 +13,9 @@ El resultado se genera de forma determinista desde PostgreSQL. `POST generate` e
 3. Normaliza identificadores Java y rechaza colisiones.
 4. Convierte tipos UML habituales a Java.
 5. Aplica herencia y relaciones JPA según tipo y multiplicidad.
-6. Ejecuta las plantillas y crea `generated-backend.zip`.
+6. Ejecuta las plantillas en un directorio temporal.
+7. Ejecuta `mvn -DskipTests package`; un fallo impide informar éxito o descargar el ZIP.
+8. Elimina el directorio temporal y crea `generated-backend.zip` en memoria.
 
 ## Estructura generada
 
@@ -32,7 +34,7 @@ generated-backend/
     └── resources/application.properties
 ```
 
-El proyecto usa Java 21, Spring Boot, Spring Web, Spring Data JPA, PostgreSQL y Lombok. La conexión se configura con `DB_URL`, `DB_USER` y `DB_PASSWORD`.
+El proyecto usa Java 21, Spring Boot, Spring Web, Bean Validation, Spring Data JPA, PostgreSQL y Lombok. La conexión se configura con `DB_URL`, `DB_USER` y `DB_PASSWORD`.
 
 ## Conversión UML
 
@@ -45,6 +47,8 @@ El proyecto usa Java 21, Spring Boot, Spring Web, Spring Data JPA, PostgreSQL y 
 - La composición añade `CascadeType.ALL`; en colecciones también `orphanRemoval`.
 - Las dependencias se representan con `@Transient`.
 - Los métodos UML se generan con la firma correspondiente y un cuerpo explícito que exige implementar la lógica de negocio.
+- Los campos de texto usan `@NotBlank` y los demás atributos UML usan `@NotNull`.
+- Un `@ControllerAdvice` traduce recursos inexistentes y solicitudes inválidas a respuestas HTTP controladas.
 
 ## Endpoints
 
@@ -57,8 +61,8 @@ El editor incorpora **Generar Backend**. Tras una generación correcta muestra *
 
 ## Pruebas
 
-- `backend: npm run test:code-generator`: manifiesto, entidades, atributos, métodos, herencia, relaciones JPA, ZIP, capas Spring, permisos y diagrama vacío.
+- `backend: npm run test:code-generator`: manifiesto, entidades, atributos, métodos, herencia, relaciones JPA, Bean Validation, manejo de errores, compilación Maven real, ZIP, permisos y diagrama vacío.
 - `frontend: npm run test:code-generator`: botón, resultado, descarga, contenido ZIP y consola sin errores.
 - Las suites completas verifican CU01–CU07, editor, realtime, IA y XMI.
 
-No se modificó Prisma y no se añadió persistencia para artefactos generados.
+No se modificó Prisma y no se añadió persistencia para artefactos generados. Maven debe estar disponible en `PATH` o indicarse mediante `MAVEN_COMMAND`; `MAVEN_REPOSITORY` permite elegir la caché de dependencias y por defecto usa el directorio temporal del sistema.

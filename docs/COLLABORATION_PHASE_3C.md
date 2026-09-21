@@ -56,4 +56,4 @@ El cliente Socket.IO es único y centralizado. Tras reconectar vuelve a autentic
 
 `frontend/test/collaboration.browser.cjs` abre dos contextos Playwright independientes: anfitrión y colaborador. Comprueba presencia mutua, creación de clase, atributo, movimiento, relación, bloqueo visible, rechazo concurrente, liberación y reconexión sin recargar manualmente el otro cliente.
 
-No se añadió persistencia de presencia/locks, eventos de IA, XMI ni otras funciones posteriores.
+Presencia y locks no se persisten y pertenecen a una única instancia NestJS. Un despliegue horizontal requeriría Redis u otro coordinador externo para compartir rooms, presencia y locks. Esta limitación no afecta la arquitectura monolítica actual.
